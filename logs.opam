@@ -1,6 +1,7 @@
-Logs — Logging infrastructure for OCaml
-=======================================
-
+opam-version: "2.0"
+name: "logs"
+synopsis: "Logging infrastructure for OCaml"
+description: """\
 Logs provides a logging infrastructure for OCaml. Logging is performed
 on sources whose reporting level can be set independently. Log message
 report is decoupled from logging and is handled by a reporter.
@@ -23,29 +24,32 @@ Logs and its reporters are distributed under the ISC license.
 [cmdliner]: http://erratique.ch/software/cmdliner
 [lwt]: http://ocsigen.org/lwt/
 
-Home page: <http://erratique.ch/software/logs>
-
-## Installation
-
-Logs can be installed with `opam`:
-
-    opam install logs
-    opam install fmt cmdliner lwt js_of_ocaml logs # Install all opt libraries
-
-If you don't use `opam` consult the [`opam`](opam) file for build
-instructions.
-
-## Documentation
-
-The documentation can be consulted [online][doc] or via `odig doc logs`. 
-
-Questions are welcome but better asked on the [OCaml forum][ocaml-forum] 
-than on the issue tracker.
-
-[doc]: https://erratique.ch/software/logs/doc
-[ocaml-forum]: https://discuss.ocaml.org/
-
-## Sample programs
-
-A few tests can be found in the [`test`](test/) directory.
-
+Home page: <http://erratique.ch/software/logs>"""
+maintainer: "Daniel Bünzli <daniel.buenzl i@erratique.ch>"
+authors: "The logs programmers"
+license: "ISC"
+tags: ["log" "system" "org:erratique"]
+homepage: "https://erratique.ch/software/logs"
+doc: "https://erratique.ch/software/logs/doc"
+bug-reports: "https://github.com/dbuenzli/logs/issues"
+depends: [
+  "ocaml" {>= "4.14.0"}
+  "lwt"
+  "fmt"
+  "cmdliner"
+  "dune"
+  "mtime" {with-test}
+]
+depopts: [
+  "js_of_ocaml"
+]
+conflicts: [
+  "cmdliner" {< "1.3.0"}
+  "js_of_ocaml-compiler" {< "5.5.0"}
+  "fmt" {< "0.9.0"}
+]
+build: [[ "dune" "build" "-p" name ]]
+dev-repo: "git+https://github.com/dune-universe/logs.git"
+url {
+  src: "git://github.com/dune-universe/logs.git#duniverse-v0.9.0"
+}

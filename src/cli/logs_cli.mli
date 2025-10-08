@@ -1,18 +1,15 @@
 (*---------------------------------------------------------------------------
    Copyright (c) 2015 The logs programmers. All rights reserved.
-   Distributed under the ISC license, see terms at the end of the file.
-   %%NAME%% %%VERSION%%
+   SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
 (** {!Cmdliner} support for {!Logs}.
 
-    See a full {{!ex}example}.
-
-    {e %%VERSION%% - {{:%%PKG_HOMEPAGE%% }homepage}} *)
+    See a full {{!ex}example}. *)
 
 (** {1 Options for setting the report level} *)
 
-val level : ?env:Cmdliner.Arg.env -> ?docs:string -> unit ->
+val level : ?env:Cmdliner.Cmd.Env.info -> ?docs:string -> unit ->
     Logs.level option Cmdliner.Term.t
 (** [level ?env ?docs ()] is a term for three {!Cmdliner} options that
     can be used with {!Logs.set_level}.  The options are documented
@@ -21,7 +18,7 @@ val level : ?env:Cmdliner.Arg.env -> ?docs:string -> unit ->
     The options work as follows:
     {ul
     {- [-v] or [--verbose], if it appears once, the value of
-       the term is is [Some Logs.Info] and more than once
+       the term is [Some Logs.Info] and more than once
        [Some Logs.Debug].}
     {- [--verbosity=LEVEL], the value of the term is [l] where
        [l] depends on on [LEVEL]. Takes over the option [-v].}
@@ -41,43 +38,36 @@ val level : ?env:Cmdliner.Arg.env -> ?docs:string -> unit ->
     if these are [tty]s. The command line interface provides options
     to control the use of colors and the log reporting level.
 {[
-let hello () = Logs.app (fun m -> m "Hello horrible world!")
+let hello _ msg =
+  Logs.app (fun m -> m "%s" msg);
+  Logs.info (fun m -> m "End-user information.");
+  Logs.debug (fun m -> m "Developer information.");
+  Logs.err (fun m -> m "Something bad happened.");
+  Logs.warn (fun m -> m "Something bad may happen in the future.");
+  if Logs.err_count () > 0 then 1 else 0
 
 let setup_log style_renderer level =
   Fmt_tty.setup_std_outputs ?style_renderer ();
   Logs.set_level level;
-  Logs.set_reporter (Logs_fmt.reporter ());
-  ()
+  Logs.set_reporter (Logs_fmt.reporter ())
 
 (* Command line interface *)
 
 open Cmdliner
 
 let setup_log =
-  Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ())
+  let env = Cmd.Env.info "TOOL_VERBOSITY" in
+  Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ~env ())
+
+let msg =
+  let doc = "The message to output."  in
+  Arg.(value & pos 0 string "Hello horrible world!" & info [] ~doc)
 
 let main () =
-  match Term.(eval (const hello $ setup_log, Term.info "tool")) with
-  | `Error _ -> exit 1
-  | _ -> exit (if Logs.err_count () > 0 then 1 else 0)
+  let cmd = Cmd.make (Cmd.info "tool") Term.(const hello $ setup_log $ msg) in
+  Cmd.eval' cmd
 
-let () = main ()
+let () = if !Sys.interactive then () else exit (main ())
 ]}
 
 *)
-
-(*---------------------------------------------------------------------------
-   Copyright (c) 2015 The logs programmers
-
-   Permission to use, copy, modify, and/or distribute this software for any
-   purpose with or without fee is hereby granted, provided that the above
-   copyright notice and this permission notice appear in all copies.
-
-   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-  ---------------------------------------------------------------------------*)

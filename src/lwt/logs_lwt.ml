@@ -1,24 +1,24 @@
 (*---------------------------------------------------------------------------
    Copyright (c) 2015 The logs programmers. All rights reserved.
-   Distributed under the ISC license, see terms at the end of the file.
-   %%NAME%% %%VERSION%%
+   SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
 type 'a log = ('a, unit Lwt.t) Logs.msgf -> unit Lwt.t
 
-let kmsg k ?(src = Logs.default) level msgf = match Logs.Src.level src with
-| None -> k ()
-| Some level' when level > level' ->
-    (if level = Logs.Error then Logs.incr_err_count () else
-     if level = Logs.Warning then Logs.incr_warn_count () else ());
-    (k ())
-| Some _ ->
-    (if level = Logs.Error then Logs.incr_err_count () else
-     if level = Logs.Warning then Logs.incr_warn_count () else ());
-    let (ret, unblock) = Lwt.wait () in
-    let k () = Lwt.bind ret k in
-    let over () = Lwt.wakeup unblock () in
-    Logs.report src level ~over k msgf
+let kmsg k ?(src = Logs.default) level msgf =
+  begin match level with
+  | Logs.Error -> Logs.incr_err_count ()
+  | Logs.Warning -> Logs.incr_warn_count ()
+  | _ -> ()
+  end;
+  match Logs.Src.level src with
+  | None -> k ()
+  | Some current_level when level > current_level -> k ()
+  | Some _ ->
+      let (ret, unblock) = Lwt.wait () in
+      let k () = Lwt.bind ret k in
+      let over () = Lwt.wakeup unblock () in
+      Logs.report src level ~over k msgf
 
 let kunit _ = Lwt.return ()
 let msg ?src level msgf = kmsg kunit ?src level msgf
@@ -40,7 +40,7 @@ let on_error_msg ?src ?(level = Logs.Error) ?header ?tags ~use t =
   | Ok v -> Lwt.return v
   | Error (`Msg e) ->
       kmsg use ?src level @@ fun m ->
-      m ?header ?tags "@[%a@]" Logs.pp_print_text e
+      m ?header ?tags "@[%a@]" Format.pp_print_text e
 
 (* Source specific functions *)
 
@@ -80,19 +80,3 @@ let src_log src =
   end
   in
   (module Log : LOG)
-
-(*---------------------------------------------------------------------------
-   Copyright (c) 2015 The logs programmers
-
-   Permission to use, copy, modify, and/or distribute this software for any
-   purpose with or without fee is hereby granted, provided that the above
-   copyright notice and this permission notice appear in all copies.
-
-   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-   WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-   MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-   ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-  ---------------------------------------------------------------------------*)

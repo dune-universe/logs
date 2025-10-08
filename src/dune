@@ -1,0 +1,7 @@
+(library
+ (name logs)
+ (public_name logs)
+ (libraries result)
+ (modules logs)
+ (flags :standard -w -27 -safe-string)
+ (wrapped false))
